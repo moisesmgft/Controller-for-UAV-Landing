@@ -1,5 +1,9 @@
 function [x,y,t] = obter_trajetoria(velocidade,a,taxa_amostragem)
 
+% Dimensoes da arena
+largura = 8;
+comprimento = 8;
+
 % Cálculo do tempo total de percurso
 tempo_total = (6.09722*a) / velocidade;
 
@@ -15,8 +19,8 @@ t = linspace(0, tempo_total, numero_pontos);
 parametro = (2 * pi * t) / (tempo_total / 2);
 
 % Cálculo das coordenadas x e y
-x = a .* sin(parametro);
-y = a .* sin(parametro) .* cos(parametro);
+x = largura/2 + a .* sin(parametro);
+y = comprimento/2 + a .* sin(parametro) .* cos(parametro);
 
     
 end
