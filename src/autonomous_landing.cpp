@@ -1,14 +1,22 @@
 #include "Drone.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <iostream>
+#include <vector>
+#include <tuple>
 
 int main(int argc, char *argv[])
 {
-	std::cout << "Starting offboard control node..." << std::endl;
-	setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+	/*
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<Drone>());
+
+	auto drone = std::make_shared<Drone>(1.0, 10.0, 10.0);
+
+	rclcpp::spin(drone);
+
 	rclcpp::shutdown();
+	*/
+	
+
 	return 0;
 }
 

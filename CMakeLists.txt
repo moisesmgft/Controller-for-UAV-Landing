@@ -1,16 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(pid_controller)
 
-# Default to C99
-if(NOT CMAKE_C_STANDARD)
-	set(CMAKE_C_STANDARD 99)
-endif()
-
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-	set(CMAKE_CXX_STANDARD 14)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -31,10 +21,18 @@ find_package(sensor_msgs REQUIRED)
 
 include_directories(include)
 
-# Add frame_transforms lib
+# Add Drone lib
 add_library(Drone SHARED include/Drone.cpp)
 ament_target_dependencies(Drone px4_msgs rclcpp geometry_msgs sensor_msgs)
 target_include_directories(Drone PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>
+)
+
+# Add Solution lib
+add_library(Solution SHARED include/Solution.cpp)
+target_link_libraries(Solution Drone)
+target_include_directories(Solution PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>
 )

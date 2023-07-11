@@ -24,6 +24,10 @@ void Drone::disarm()
 	RCLCPP_INFO(this->get_logger(), "Disarm command send");
 }
 
+void Drone::goTo(float x, float y, float z) {
+	publish_trajectory_setpoint(x,y,z);
+}
+
 /**
  * @brief Publish the offboard control mode.
  *        For this example, only position and altitude controls are active.
@@ -45,10 +49,10 @@ void Drone::publish_offboard_control_mode()
  *        For this example, it sends a trajectory setpoint to make the
  *        vehicle hover at 5 meters with a yaw angle of 180 degrees.
  */
-void Drone::publish_trajectory_setpoint()
+void Drone::publish_trajectory_setpoint(float x, float y, float z)
 {
 	TrajectorySetpoint msg{};
-	msg.position = {0.0, 0.0, -5.0};
+	msg.position = {x,y,z};
 	msg.yaw = -3.14; // [-PI:PI]
 	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
 	trajectory_setpoint_publisher_->publish(msg);
