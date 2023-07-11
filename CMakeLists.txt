@@ -32,18 +32,19 @@ find_package(sensor_msgs REQUIRED)
 include_directories(include)
 
 # Add frame_transforms lib
-add_library(frame_transforms SHARED src/lib/frame_transforms.cpp)
-ament_target_dependencies(frame_transforms Eigen3 geometry_msgs sensor_msgs)
-target_include_directories(frame_transforms PUBLIC
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
-	$<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+add_library(Drone SHARED include/Drone.cpp)
+ament_target_dependencies(Drone px4_msgs rclcpp geometry_msgs sensor_msgs)
+target_include_directories(Drone PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>
 )
 
 
-# examples/offboard/offboard_control
+
 add_executable(autonomous_landing src/autonomous_landing.cpp)
-ament_target_dependencies(offboard_control rclcpp px4_msgs)
-install(TARGETS offboard_control DESTINATION lib/${PROJECT_NAME})
+ament_target_dependencies(autonomous_landing rclcpp)
+target_link_libraries(autonomous_landing Drone)
+install(TARGETS autonomous_landing DESTINATION lib/${PROJECT_NAME})
 
 
 ############
@@ -53,27 +54,24 @@ install(TARGETS offboard_control DESTINATION lib/${PROJECT_NAME})
 # Export information to downstream packages
 ament_export_dependencies(ament_cmake rclcpp rosidl_default_runtime eigen3_cmake_module Eigen3 px4_msgs geometry_msgs sensor_msgs)
 
-ament_export_targets(export_frame_transforms HAS_LIBRARY_TARGET)
+ament_export_targets(export_Drone HAS_LIBRARY_TARGET)
 
 ament_export_include_directories(include)
-ament_export_libraries(frame_transforms)
+ament_export_libraries(Drone)
 
 # Install header files
-install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION include/${PROJECT_NAME})
+install(DIRECTORY include/ DESTINATION include)
 
-install(TARGETS frame_transforms
-	EXPORT export_frame_transforms
-	ARCHIVE DESTINATION lib
-	LIBRARY DESTINATION lib
-	RUNTIME DESTINATION bin
+install(TARGETS Drone
+	EXPORT export_Drone
 	INCLUDES DESTINATION include
 )
 
 # Install launch files.
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+#install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
 # Install tests
-install(DIRECTORY test DESTINATION share/${PROJECT_NAME}/)
+#install(DIRECTORY test DESTINATION share/${PROJECT_NAME}/)
 
 
 ############
