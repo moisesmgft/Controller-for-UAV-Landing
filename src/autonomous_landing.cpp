@@ -1,4 +1,5 @@
 #include "Drone.hpp"
+#include "AutonomousDrone.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <iostream>
 #include <vector>
@@ -6,15 +7,16 @@
 
 int main(int argc, char *argv[])
 {
-	/*
+	
 	rclcpp::init(argc, argv);
 
-	auto drone = std::make_shared<Drone>(1.0, 10.0, 10.0);
+	AutonomousDrone autoDrone;
+	auto drone = std::make_shared<Drone>(AutonomousDrone::eight, &autoDrone);
 
 	rclcpp::spin(drone);
 
 	rclcpp::shutdown();
-	*/
+	
 	
 
 	return 0;

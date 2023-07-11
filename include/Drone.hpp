@@ -20,12 +20,12 @@ using namespace std::chrono_literals;
 using namespace px4_msgs::msg;
 
 
-class Solution; // resolve dependencia circular
+class AutonomousDrone; // resolve dependencia circular
 class Drone : public rclcpp::Node
 {
 public:
-	typedef void (*Callback)(Drone*, Solution*);
-	Drone(float omega_, float radius_, float dt_, Callback _callback) : Node("drone"), omega(omega_), radius(radius_), dt(dt_), callback(_callback)
+	typedef void (*Callback)(Drone*, AutonomousDrone*);
+	Drone(Callback _callback, AutonomousDrone* _solution) : Node("drone"), callback(_callback), solutionPtr(_solution)
 	{
 
 		offboard_control_mode_publisher_ = this->create_publisher<OffboardControlMode>("/fmu/in/offboard_control_mode", 10);
@@ -35,6 +35,8 @@ public:
 
 		offboard_setpoint_counter_ = 0;
 
+		time_count_ = 0;
+		/*
 		auto timer_callback = [this]() -> void {
 
 			if (offboard_setpoint_counter_ == 10) {
@@ -46,20 +48,24 @@ public:
 				
 			}
 
-			// offboard_control_mode needs to be paired with trajectory_setpoint
-
-			float x = this->radius * cos(offboard_setpoint_counter_ * (dt/1000));
-			float y = this->radius * sin(offboard_setpoint_counter_ * (dt/1000));
-
-			publish_offboard_control_mode();
-			this->goTo(x,y,-5.0);
+			this->goTo(0.0,0.0,-5.0);
 
 			// stop the counter after reaching 11
 			offboard_setpoint_counter_++;
 			
 		};
+		*/
 
-		timer_ = this->create_wall_timer(10ms, timer_callback);
+		auto func = [this]() -> void {
+			this->time_count_ += 0.01;
+			callback(this, this->solutionPtr);
+		};
+		int i = 10;
+		while(--i)
+			this->goTo(0.0,0.0,-5.0);
+		this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
+		this->arm();
+		timer_ = this->create_wall_timer(10ms, func);
 	}
 
 	void arm();
@@ -67,7 +73,14 @@ public:
 	void goTo(float x, float y, float z);
 
 
+	// Getters
+	float getTime() {return time_count_;}
+
+
 private:
+
+	Callback callback;
+	AutonomousDrone* solutionPtr;
 
 
 	rclcpp::TimerBase::SharedPtr timer_;
@@ -79,15 +92,13 @@ private:
 	//std::atomic<uint64_t> timestamp_;   //!< common synced timestamped
 
 	uint64_t offboard_setpoint_counter_;   //!< counter for the number of setpoints sent
-
-	float omega, radius, dt;
+	float time_count_;
 
 	void publish_offboard_control_mode();
 	void publish_trajectory_setpoint(float x, float y, float z);
 	void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
 
 	
-	Callback callback;
 
 };
 

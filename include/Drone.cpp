@@ -25,6 +25,7 @@ void Drone::disarm()
 }
 
 void Drone::goTo(float x, float y, float z) {
+	publish_offboard_control_mode();
 	publish_trajectory_setpoint(x,y,z);
 }
 

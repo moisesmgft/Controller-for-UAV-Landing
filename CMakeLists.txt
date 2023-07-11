@@ -37,11 +37,27 @@ target_include_directories(Solution PUBLIC
 	$<INSTALL_INTERFACE:include>
 )
 
+# Add AutonomousDrone lib
+add_library(AutonomousDrone SHARED include/AutonomousDrone.cpp)
+target_link_libraries(AutonomousDrone Drone Trajectory)
+target_include_directories(AutonomousDrone PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>
+)
+
+# Add Trajectory lib
+add_library(Trajectory SHARED include/Trajectory.cpp)
+target_link_libraries(Trajectory Drone)
+target_include_directories(Trajectory PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>
+)
+
 
 
 add_executable(autonomous_landing src/autonomous_landing.cpp)
 ament_target_dependencies(autonomous_landing rclcpp)
-target_link_libraries(autonomous_landing Drone)
+target_link_libraries(autonomous_landing Drone AutonomousDrone)
 install(TARGETS autonomous_landing DESTINATION lib/${PROJECT_NAME})
 
 
@@ -55,7 +71,7 @@ ament_export_dependencies(ament_cmake rclcpp rosidl_default_runtime eigen3_cmake
 ament_export_targets(export_Drone HAS_LIBRARY_TARGET)
 
 ament_export_include_directories(include)
-ament_export_libraries(Drone)
+ament_export_libraries(Drone AutonomousDrone)
 
 # Install header files
 install(DIRECTORY include/ DESTINATION include)
@@ -64,6 +80,17 @@ install(TARGETS Drone
 	EXPORT export_Drone
 	INCLUDES DESTINATION include
 )
+
+install(TARGETS AutonomousDrone
+	EXPORT export_AutonomousDrone
+	INCLUDES DESTINATION include
+)
+
+install(TARGETS Trajectory
+	EXPORT export_Trajectory
+	INCLUDES DESTINATION include
+)
+
 
 # Install launch files.
 #install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
