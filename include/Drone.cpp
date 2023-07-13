@@ -80,3 +80,14 @@ void Drone::publish_vehicle_command(uint16_t command, float param1, float param2
 	vehicle_command_publisher_->publish(msg);
 }
 
+void Drone::positionCallback(const VehicleLocalPosition::SharedPtr msg) {
+	positionReference = *msg;
+}
+
+Eigen::Vector3d Drone::getCurrentPosition() {
+	return Eigen::Vector3d({
+		positionReference.x,
+		positionReference.y,
+		positionReference.z
+	});
+}

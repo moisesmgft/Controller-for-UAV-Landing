@@ -12,6 +12,7 @@ public:
     AutonomousDrone() : trajectory{10.0f,9.4f,{8.0f,8.0f}}
     {}
 
+    static void hover(Drone*, AutonomousDrone*);
     static void circlePath(Drone*,AutonomousDrone*);
     static void eight(Drone*, AutonomousDrone*);
     float radius = 5.0;

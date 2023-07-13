@@ -23,7 +23,7 @@ include_directories(include)
 
 # Add Drone lib
 add_library(Drone SHARED include/Drone.cpp)
-ament_target_dependencies(Drone px4_msgs rclcpp geometry_msgs sensor_msgs)
+ament_target_dependencies(Drone px4_msgs rclcpp geometry_msgs sensor_msgs Eigen3)
 target_include_directories(Drone PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>
@@ -47,8 +47,15 @@ target_include_directories(AutonomousDrone PUBLIC
 
 # Add Trajectory lib
 add_library(Trajectory SHARED include/Trajectory.cpp)
-target_link_libraries(Trajectory Drone)
 target_include_directories(Trajectory PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>
+)
+
+# Add PIDController lib
+add_library(PIDController SHARED include/PIDController.cpp)
+ament_target_dependencies(PIDController Eigen3)
+target_include_directories(PIDController PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>
 )
