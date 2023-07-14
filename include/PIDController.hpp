@@ -1,4 +1,3 @@
-#include <Eigen/Dense>
 #include <chrono>
 
 using namespace std::chrono;

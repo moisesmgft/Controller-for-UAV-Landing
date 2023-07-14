@@ -60,6 +60,15 @@ target_include_directories(PIDController PUBLIC
 	$<INSTALL_INTERFACE:include>
 )
 
+# Add MultiAxisPIDController lib
+add_library(MultiAxisPIDController SHARED include/MultiAxisPIDController.cpp)
+ament_target_dependencies(MultiAxisPIDController Eigen3)
+target_link_libraries(MultiAxisPIDController PIDController)
+target_include_directories(MultiAxisPIDController PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>
+)
+
 
 
 add_executable(autonomous_landing src/autonomous_landing.cpp)

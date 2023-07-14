@@ -3,14 +3,22 @@
 
 class MultiAxisPIDController {
 public:
-    MultiAxisPIDController(Eigen::Vector4d horizontalGains, Eigen::Vector4d verticalGains, float Ts) :
-        _hController(horizontalGains[0], horizontalGains[1], horizontalGains[2], horizontalGains[3], Ts),
-        _vController(verticalGains[0], verticalGains[1], verticalGains[2], verticalGains[3], Ts) {}
+    MultiAxisPIDController(Eigen::Vector3d horizontalGains, Eigen::Vector3d verticalGains) :
+        _xController(horizontalGains[0], horizontalGains[1], horizontalGains[2]),
+        _yController(horizontalGains[0], horizontalGains[1], horizontalGains[2]),
+        _zController(verticalGains[0], verticalGains[1], verticalGains[2]) {}
 
-    
+    Eigen::Vector3d getOutput(const Eigen::Vector3d &current);
+    void reset();
+
+    /*
+    Setter
+    */
+    void setWindup(float horizontalWindup, float verticalWindup);
+    void setReference(const Eigen::Vector3d &reference);
 
 
 private:
 
-    PIDController _hController, _vController;
+    PIDController _xController, _yController, _zController;
 };  
