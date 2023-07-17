@@ -24,12 +24,10 @@ using std::placeholders::_1;
 
 
 
-class AutonomousDrone; // resolve dependencia circular
 class Drone : public rclcpp::Node
 {
 public:
-	typedef void (*Callback)(Drone*, AutonomousDrone*);
-	Drone(Callback _callback, AutonomousDrone* _solution) : Node("drone"), callback(_callback), solutionPtr(_solution)
+	Drone() : Node("drone")
 	{
 
 		offboard_control_mode_publisher_ = this->create_publisher<OffboardControlMode>("/fmu/in/offboard_control_mode", 10);
@@ -47,17 +45,16 @@ public:
 		offboard_setpoint_counter_ = 0;
 		time_count_ = 0;
 
-		auto func = [this]() -> void {
-			++offboard_setpoint_counter_;
-			this->time_count_ += 0.01;
-			callback(this, this->solutionPtr);
-		};
-		int i = 10;
+
+		int i = 15;
 		while(--i)
 			this->goTo(0.0,0.0,-5.0);
 		this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
+
 		this->arm();
-		timer_ = this->create_wall_timer(10ms, func);
+		
+
+		//timer_ = this->create_wall_timer(10ms, func);
 	}
 
 	void arm();
@@ -70,11 +67,8 @@ public:
 	float getTime() {return time_count_;}
 	Eigen::Vector3d getCurrentPosition();
 
-
 private:
 
-	Callback callback;
-	AutonomousDrone* solutionPtr;
 
 
 	rclcpp::TimerBase::SharedPtr timer_;
