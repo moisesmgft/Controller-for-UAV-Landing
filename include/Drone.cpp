@@ -25,19 +25,28 @@ void Drone::disarm()
 }
 
 void Drone::goTo(float x, float y, float z) {
-	publish_offboard_control_mode();
+	publish_offboard_control_mode(true, false);
 	publish_trajectory_setpoint(x,y,z);
+}
+
+void Drone::setVelocity(float vx, float vy, float vz) {
+	publish_offboard_control_mode(false, true);
+	TrajectorySetpoint msg{};
+	msg.velocity = {vx,vy,vz};
+	msg.yaw = -3.14; // [-PI:PI]
+	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
+	trajectory_setpoint_publisher_->publish(msg);
 }
 
 /**
  * @brief Publish the offboard control mode.
  *        For this example, only position and altitude controls are active.
  */
-void Drone::publish_offboard_control_mode()
+void Drone::publish_offboard_control_mode(bool position, bool velocity)
 {
 	OffboardControlMode msg{};
-	msg.position = true;
-	msg.velocity = false;
+	msg.position = position;
+	msg.velocity = velocity;
 	msg.acceleration = false;
 	msg.attitude = false;
 	msg.body_rate = false;

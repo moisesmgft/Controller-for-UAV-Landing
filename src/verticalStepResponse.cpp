@@ -41,14 +41,14 @@ public:
 		if (enter) {
 			std::cout << "Entering step state.\n";
 			startTime = system_clock::now();
-			controller_.setReference({1.0,0.0,-5.0});
+			controller_.setReference({0.0,0.0,-6.0});
 			enter = false;
 		}
 		Eigen::Vector3d vec = controller_.getOutput(drone_->getCurrentPosition());
-		drone_->goTo(vec[0],0.0,-5.0);
+		drone_->goTo(0.0,0.0,vec[2]);
 	}
 	bool to_stateEnd() {
-		return (getDuration() > 20);
+		return (getDuration() > 15);
 	}
 	stateStep(Drone* drone, MultiAxisPIDController& controller) :
 		drone_{drone}, controller_{controller}, enter{true} {
@@ -97,10 +97,10 @@ int main(int argc, char *argv[])
 	char loop;
 
 	while (std::cout << "'y' to tune PID controller.\n" && std::cin >> loop && loop == 'y') {
-		float hP, hI, hD;
+		float vP, vI, vD;
 
-		std::cout << "Horizontal gains: ";
-		std::cin >> hP >> hI >> hD;
+		std::cout << "Verical gains: ";
+		std::cin >> vP >> vI >> vD;
 
 		//std::cout << "Vertical gains: ";
 		//std::cin >> vP >> vI >> vD;
@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
 		rclcpp::init(argc, argv);
 		auto drone = std::make_shared<Drone>();
 
-		Eigen::Vector3d horizontalGains = {hP, hI, hD};
-		Eigen::Vector3d verticalGains = {0.0, 0.0, 0.0};
+		Eigen::Vector3d verticalGains = {vP, vI, vD};
+		Eigen::Vector3d horizontalGains = {0.0, 0.0, 0.0};
 
 		MultiAxisPIDController controller(horizontalGains,verticalGains);
 		stateTakeOff takeoff(drone.get());

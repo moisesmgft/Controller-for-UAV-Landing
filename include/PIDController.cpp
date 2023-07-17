@@ -28,6 +28,7 @@ float PIDController::getOutput(float current) {
 }
 
 void PIDController::reset() {
+    lastError = 0.0f;
     ITerm = 0.0f;
     lastTime = system_clock::now();
 }

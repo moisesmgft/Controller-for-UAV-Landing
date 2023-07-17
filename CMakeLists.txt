@@ -84,6 +84,11 @@ ament_target_dependencies(horizontalStepResponse rclcpp)
 target_link_libraries(horizontalStepResponse Drone MultiAxisPIDController FSM State)
 install(TARGETS horizontalStepResponse DESTINATION lib/${PROJECT_NAME})
 
+add_executable(verticalStepResponse src/verticalStepResponse.cpp)
+ament_target_dependencies(verticalStepResponse rclcpp)
+target_link_libraries(verticalStepResponse Drone MultiAxisPIDController FSM State)
+install(TARGETS verticalStepResponse DESTINATION lib/${PROJECT_NAME})
+
 
 ############
 # Install ##

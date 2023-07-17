@@ -41,16 +41,11 @@ public:
 		vehicle_local_position_subscription_ = this->create_subscription<VehicleLocalPosition>(
 			"fmu/out/vehicle_local_position", qos, std::bind(&Drone::positionCallback,this,_1));
 
-
-		offboard_setpoint_counter_ = 0;
-		time_count_ = 0;
-
-
-		int i = 15;
+		int i = 20;
 		while(--i)
 			this->goTo(0.0,0.0,-5.0);
-		this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
 
+		this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
 		this->arm();
 		
 
@@ -60,6 +55,7 @@ public:
 	void arm();
 	void disarm();
 	void goTo(float x, float y, float z);
+	void setVelocity(float vx, float vy, float vz);
 
 
 	// Getters
@@ -90,7 +86,7 @@ private:
 	uint64_t offboard_setpoint_counter_;   //!< counter for the number of setpoints sent
 	float time_count_;
 
-	void publish_offboard_control_mode();
+	void publish_offboard_control_mode(bool position, bool velocity);
 	void publish_trajectory_setpoint(float x, float y, float z);
 	void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
 	/*
