@@ -1,10 +1,10 @@
 #include "MultiAxisPIDController.hpp"
 
-Eigen::Vector3d MultiAxisPIDController::getOutput(const Eigen::Vector3d &current) {
+Eigen::Vector3d MultiAxisPIDController::getOutput(const Eigen::Vector3d &current, const Eigen::Vector3d &reference) {
     return Eigen::Vector3d({
-        _xController.getOutput(current[0]),
-        _yController.getOutput(current[1]),
-        _zController.getOutput(current[2])
+        _xController.getOutput(current[0], reference[0]),
+        _yController.getOutput(current[1], reference[1]),
+        _zController.getOutput(current[2], reference[2])
     });
 }
 
@@ -18,11 +18,5 @@ void MultiAxisPIDController::setWindup(float horizontalWindup, float verticalWin
     _xController.setWindup(horizontalWindup);
     _yController.setWindup(horizontalWindup);
     _zController.setWindup(verticalWindup);
-}
-
-void MultiAxisPIDController::setReference(const Eigen::Vector3d &reference) {
-    _xController.setReference(reference[0]);
-    _yController.setReference(reference[1]);
-    _zController.setReference(reference[2]);
 }
 

@@ -71,14 +71,6 @@ target_include_directories(FSM PUBLIC
 	$<INSTALL_INTERFACE:include>
 )
 
-
-
-add_executable(autonomous_landing src/autonomous_landing.cpp)
-ament_target_dependencies(autonomous_landing rclcpp)
-target_link_libraries(autonomous_landing Drone)
-install(TARGETS autonomous_landing DESTINATION lib/${PROJECT_NAME})
-
-
 add_executable(horizontalStepResponse src/horizontalStepResponse.cpp)
 ament_target_dependencies(horizontalStepResponse rclcpp)
 target_link_libraries(horizontalStepResponse Drone MultiAxisPIDController FSM State)
@@ -88,6 +80,11 @@ add_executable(verticalStepResponse src/verticalStepResponse.cpp)
 ament_target_dependencies(verticalStepResponse rclcpp)
 target_link_libraries(verticalStepResponse Drone MultiAxisPIDController FSM State)
 install(TARGETS verticalStepResponse DESTINATION lib/${PROJECT_NAME})
+
+add_executable(precisionLanding src/precisionLanding.cpp)
+ament_target_dependencies(precisionLanding rclcpp)
+target_link_libraries(precisionLanding Drone MultiAxisPIDController FSM State Trajectory)
+install(TARGETS precisionLanding DESTINATION lib/${PROJECT_NAME})
 
 
 ############

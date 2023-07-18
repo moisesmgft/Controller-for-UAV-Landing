@@ -8,14 +8,13 @@ public:
         _yController(horizontalGains[0], horizontalGains[1], horizontalGains[2]),
         _zController(verticalGains[0], verticalGains[1], verticalGains[2]) {}
 
-    Eigen::Vector3d getOutput(const Eigen::Vector3d &current);
+    Eigen::Vector3d getOutput(const Eigen::Vector3d &current, const Eigen::Vector3d &reference);
     void reset();
 
     /*
     Setter
     */
     void setWindup(float horizontalWindup, float verticalWindup);
-    void setReference(const Eigen::Vector3d &reference);
 
 
 private:

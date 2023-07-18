@@ -41,10 +41,10 @@ public:
 		if (enter) {
 			std::cout << "Entering step state.\n";
 			startTime = system_clock::now();
-			controller_.setReference({1.0,0.0,-5.0});
+			controller_.reset();
 			enter = false;
 		}
-		Eigen::Vector3d vec = controller_.getOutput(drone_->getCurrentPosition());
+		Eigen::Vector3d vec = controller_.getOutput(drone_->getCurrentPosition(), {1.0,0.0,-5.0});
 		drone_->goTo(vec[0],0.0,-5.0);
 	}
 	bool to_stateEnd() {
@@ -125,33 +125,7 @@ int main(int argc, char *argv[])
 		}
 		rclcpp::shutdown();
 		
-	}
-
-	/*
-	rclcpp::init(argc, argv);
-
-	auto drone = std::make_shared<Drone>();
-
-	Eigen::Vector3d horizontalGains = {1.0,1.0,1.0};
-	Eigen::Vector3d verticalGains = {1.0,1.0,1.0};
-
-	MultiAxisPIDController controller(horizontalGains,verticalGains);
-	stateTakeOff takeoff(drone.get());
-	stateStep step(drone.get(), controller);
-	stateEnd end;
-
-	stepFSM myFSM(takeoff,step,end);
-
-	while (rclcpp::ok() && !myFSM.isFinished())
-	{
-		myFSM.executeFSM();
-		rclcpp:spin_some(drone);
-	}
-	rclcpp::shutdown();
-
-	*/
-
-	
+	}	
 
 	return 0;
 }

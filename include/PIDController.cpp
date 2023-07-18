@@ -2,13 +2,13 @@
 
 using namespace std::chrono;
 
-float PIDController::getOutput(float current) {
+float PIDController::getOutput(float current, float reference) {
 
     system_clock::time_point currentTime = system_clock::now();
     duration<float> duration = currentTime - lastTime;
     float dt = duration.count();
 
-    float error = _reference - current;
+    float error = reference - current;
 
     // P Term
     float PTerm = _Kp*error;
@@ -34,9 +34,5 @@ void PIDController::reset() {
 }
 
 void PIDController::setWindup(float windup) { _windup = windup; }
-void PIDController::setReference(float reference) { 
-    _reference = reference;
-    reset();
-}
 
 

@@ -7,14 +7,13 @@ public:
         _Kp(Kp), _Ki(Ki), _Kd(Kd), ITerm(0.0), _windup(1e3f), lastTime{system_clock::now()} 
     {}
 
-    float getOutput(float current);
+    float getOutput(float current, float reference);
     void reset();
 
     /*
     Setter
     */
     void setWindup(float windup);
-    void setReference(float reference);
 
     /*
     Getters
@@ -29,5 +28,4 @@ private:
 
     float _Kp, _Ki, _Kd, ITerm, _windup, lastError;
     system_clock::time_point lastTime;
-    float _reference;
 };  
