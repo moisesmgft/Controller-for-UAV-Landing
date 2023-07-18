@@ -14,7 +14,7 @@ public:
     /*
     Setter
     */
-    void setWindup(float horizontalWindup, float verticalWindup);
+    void setWindup(Eigen::Vector2d horizontalWindup, Eigen::Vector2d verticalWindup);
 
 
 private:

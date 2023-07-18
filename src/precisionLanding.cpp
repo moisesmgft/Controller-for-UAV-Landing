@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <tuple>
+#include <fstream>
+
 
 #include "Trajectory.hpp"
 #include "FSM.hpp"
@@ -37,7 +39,9 @@ private:
 	MultiAxisPIDController controller_;
 	Trajectory trajectory_;
 	system_clock::time_point startTime;
+	std::ofstream &csvDrone_, &csvBaseTruth_, &csvBaseMeasure_;
 	bool enter;
+	int counter_;
 public:
 	void act() override {
 		if (enter) {
@@ -46,17 +50,41 @@ public:
 			controller_.reset();
 			enter = false;
 		}
-		auto [x,y] = trajectory_.getPoint();
-		Eigen::Vector3d vec = controller_.getOutput(drone_->getCurrentPosition(), {x,y,-0.3});
+
+		auto [xMeasure,yMeasure,xTruth,yTruth] = trajectory_.getPoint();
+		auto pos = drone_->getCurrentPosition();
+		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-0.3});
+
+		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
+		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
+		csvBaseMeasure_ << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
+
 		drone_->goTo(0.0,0.0,vec[2]);
 	}
 	bool to_stateLanding() {
-		return (getDuration() > 15);
+		auto [x,y,d,dd] = trajectory_.getPoint();
+		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-0.3}) - drone_->getCurrentPosition();
+		if (diff.norm() < 0.15)
+			counter_ ++;
+		return (counter_ > 5);
 	}
-	stateTracking(Drone* drone, MultiAxisPIDController& controller, Trajectory trajectory) :
-		drone_{drone}, controller_{controller}, trajectory_{trajectory}, enter{true} {
 
+	stateTracking(Drone* drone, MultiAxisPIDController& controller, Trajectory trajectory, 
+					std::ofstream &csvDrone, std::ofstream &csvBaseTruth, std::ofstream &csvBaseMeasure) :
+		drone_{drone}, 
+		controller_{controller}, 
+		trajectory_{trajectory}, 
+		csvDrone_{csvDrone},
+		csvBaseTruth_{csvBaseTruth},
+		csvBaseMeasure_{csvBaseMeasure},
+		enter{true}, 
+		counter_(0) 
+	{
+		csvDrone_ << "X,Y,Z" << std::endl;
+		csvBaseTruth_ << "X,Y,Z" << std::endl;
+		csvBaseMeasure_ << "X,Y,Z" << std::endl;
 	}
+
 	float getDuration() {
 	    system_clock::time_point currentTime = system_clock::now();
     	duration<float> duration = currentTime - startTime;
@@ -118,25 +146,36 @@ int main(int argc, char *argv[])
 
 	while (std::cout << "'y' to simulate autonomous landing.\n" && std::cin >> loop && loop == 'y') {
 
-		float mean, stddev;
+		float mean = 0.0, stddev;
 
-		std::cout << "Mean: ";
-		std::cin >> mean;
+		//std::cout << "Mean: ";
+		//std::cin >> mean;
 		std::cout << "Standard deviation: ";
 		std::cin >> stddev;
 
+		std::string csvDroneFilename = "results/DRONE__" + std::to_string(stddev) + ".csv";
+		std::string csvBaseTruthFilename = "results/BASE_TRUTH__" + std::to_string(stddev) + ".csv";
+		std::string csvBaseMeasureFilename = "results/BASE_MEASURED__" + std::to_string(stddev) + ".csv";
+		
+		std::ofstream csvDrone(csvDroneFilename);
+		std::ofstream csvBaseTruth(csvBaseTruthFilename);
+		std::ofstream csvBaseMeasure(csvBaseMeasureFilename);
+
 		
 		rclcpp::init(argc, argv);
+		rclcpp::Rate loop_rate(60);
 		auto drone = std::make_shared<Drone>();
 
 		Eigen::Vector3d verticalGains = {1.5, 0.3, 0.3};
-		Eigen::Vector3d horizontalGains = {1.5, 0.3, 0.3};
+		Eigen::Vector3d horizontalGains = {1.0, 0.2, 0.2};
 
 		MultiAxisPIDController controller(horizontalGains,verticalGains);
+		controller.setWindup({0.0, 8.0},{-10.0, 10.0});
+
 		Trajectory trajectory(6.0, 0.4, {8.0, 8.0}, mean, stddev);
 
 		stateTakeOff takeoff(drone.get());
-		stateTracking tracking(drone.get(), controller, trajectory);
+		stateTracking tracking(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
 		stateLanding landing(drone.get());
 		stateEnd end;
 
@@ -146,6 +185,7 @@ int main(int argc, char *argv[])
 		{
 			myFSM.executeFSM();
 			rclcpp:spin_some(drone);
+			loop_rate.sleep();
 		}
 		rclcpp::shutdown();
 		

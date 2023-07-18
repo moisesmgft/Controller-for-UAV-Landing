@@ -15,16 +15,17 @@ float PIDController::getOutput(float current, float reference) {
     
     // I Term
     ITerm += _Ki * (error + lastError) * dt / 2.0;
-
     // D Term
     float DTerm = _Kd * (error - lastError) / dt;
 
     lastError = error;
     lastTime = currentTime;
 
+    float output = (PTerm + ITerm + DTerm);
+    output = (output > _maxWindup) ? (_maxWindup) : ((output < _minWindup) ? (_minWindup) : (output));
 
 
-    return (PTerm + ITerm + DTerm);
+    return output;
 }
 
 void PIDController::reset() {
@@ -33,6 +34,9 @@ void PIDController::reset() {
     lastTime = system_clock::now();
 }
 
-void PIDController::setWindup(float windup) { _windup = windup; }
+void PIDController::setWindup(float min, float max) { 
+    _minWindup = min;
+    _maxWindup = max;
+}
 
 

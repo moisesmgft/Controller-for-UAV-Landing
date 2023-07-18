@@ -3,12 +3,14 @@
 
 using namespace std::chrono;
 
-std::pair<float,float> Trajectory::getPoint()
+std::tuple<float,float,float,float> Trajectory::getPoint()
 {
     float param = getParam();
-    float x = c.first/2.0f + a * sin(param) + randomGenerator();
-    float y = c.second/2.0f + a * sin(param) * cos(param) + randomGenerator();
-    return {x, y};
+    float xTruth = c.first/2.0f + a * sin(param),
+          yTruth = c.second/2.0f + a * sin(param) * cos(param);
+    float xNoise = xTruth + randomGenerator(),
+          yNoise = yTruth + randomGenerator();
+    return {xNoise, yNoise, xTruth, yTruth};
 }
 
 float Trajectory::getParam()

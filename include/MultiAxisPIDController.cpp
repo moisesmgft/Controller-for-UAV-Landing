@@ -14,9 +14,9 @@ void MultiAxisPIDController::reset() {
     _zController.reset();
 }
 
-void MultiAxisPIDController::setWindup(float horizontalWindup, float verticalWindup) {
-    _xController.setWindup(horizontalWindup);
-    _yController.setWindup(horizontalWindup);
-    _zController.setWindup(verticalWindup);
+void MultiAxisPIDController::setWindup(Eigen::Vector2d horizontalWindup, Eigen::Vector2d verticalWindup) {
+    _xController.setWindup(horizontalWindup[0], horizontalWindup[1]);
+    _yController.setWindup(horizontalWindup[0], horizontalWindup[1]);
+    _zController.setWindup(verticalWindup[0], verticalWindup[1]);
 }
 

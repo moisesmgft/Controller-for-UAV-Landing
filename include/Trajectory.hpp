@@ -2,6 +2,7 @@
 #include <random>
 #include <functional>
 #include <chrono>
+#include <tuple>
 
 using namespace std::chrono;
 
@@ -19,7 +20,7 @@ public:
         float totalTime = (6.09722*a) / v;
         p = 2 * PI / (totalTime);
     }
-    std::pair<float,float> getPoint();
+    std::tuple<float,float,float,float> getPoint();
     float getParam();
 private:
     float a, v, p;
