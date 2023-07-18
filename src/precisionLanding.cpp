@@ -46,8 +46,9 @@ public:
 			controller_.reset();
 			enter = false;
 		}
-		Eigen::Vector3d vec = controller_.getOutput(drone_->getCurrentPosition(), {0.0,0.0,-6.0});
-		drone_->goTo(0.0,0.0,vec[2] - 5.0);
+		auto [x,y] = trajectory_.getPoint();
+		Eigen::Vector3d vec = controller_.getOutput(drone_->getCurrentPosition(), {x,y,-0.3});
+		drone_->goTo(0.0,0.0,vec[2]);
 	}
 	bool to_stateLanding() {
 		return (getDuration() > 15);
