@@ -53,13 +53,13 @@ public:
 
 		auto [xMeasure,yMeasure,xTruth,yTruth] = trajectory_.getPoint();
 		auto pos = drone_->getCurrentPosition();
-		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-0.3});
+		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-1.0});
 
-		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
+		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << "," << vec[2]<<std::endl;
 		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
 		csvBaseMeasure_ << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
 
-		drone_->goTo(0.0,0.0,vec[2]);
+		drone_->goTo(vec[0],vec[1],vec[2]);
 	}
 	bool to_stateLanding() {
 		auto [x,y,d,dd] = trajectory_.getPoint();
@@ -80,7 +80,7 @@ public:
 		enter{true}, 
 		counter_(0) 
 	{
-		csvDrone_ << "X,Y,Z" << std::endl;
+		csvDrone_ << "X,Y,Z,Out_Z" << std::endl;
 		csvBaseTruth_ << "X,Y,Z" << std::endl;
 		csvBaseMeasure_ << "X,Y,Z" << std::endl;
 	}
@@ -153,9 +153,9 @@ int main(int argc, char *argv[])
 		std::cout << "Standard deviation: ";
 		std::cin >> stddev;
 
-		std::string csvDroneFilename = "results/DRONE__" + std::to_string(stddev) + ".csv";
-		std::string csvBaseTruthFilename = "results/BASE_TRUTH__" + std::to_string(stddev) + ".csv";
-		std::string csvBaseMeasureFilename = "results/BASE_MEASURED__" + std::to_string(stddev) + ".csv";
+		std::string csvDroneFilename = "results/data/landing/drone/DRONE__" + std::to_string(stddev) + ".csv";
+		std::string csvBaseTruthFilename = "results/data/landing/truth/BASE_TRUTH__" + std::to_string(stddev) + ".csv";
+		std::string csvBaseMeasureFilename = "results/data/landing/measured/BASE_MEASURED__" + std::to_string(stddev) + ".csv";
 		
 		std::ofstream csvDrone(csvDroneFilename);
 		std::ofstream csvBaseTruth(csvBaseTruthFilename);
@@ -166,11 +166,11 @@ int main(int argc, char *argv[])
 		rclcpp::Rate loop_rate(60);
 		auto drone = std::make_shared<Drone>();
 
-		Eigen::Vector3d verticalGains = {1.5, 0.3, 0.3};
-		Eigen::Vector3d horizontalGains = {1.0, 0.2, 0.2};
+		Eigen::Vector3d verticalGains = {6.9, 11.5, 1.035};
+		Eigen::Vector3d horizontalGains = {1.35, 1.08, 0.42};
 
 		MultiAxisPIDController controller(horizontalGains,verticalGains);
-		controller.setWindup({0.0, 8.0},{-10.0, 10.0});
+		controller.setWindup({-10.0, 10.0},{-10.0, 0.0});
 
 		Trajectory trajectory(6.0, 0.4, {8.0, 8.0}, mean, stddev);
 
