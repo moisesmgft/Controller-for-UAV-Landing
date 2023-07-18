@@ -27,10 +27,10 @@ def plot_curve_from_csv(csv_file):
 
 if __name__ == '__main__':
     # Replace the directory path with the location of your CSV files
-    directory = 'results/data/'
+    directory = 'results/data/horizontal'
     
     # Iterate through all files in the directory
-    for filename in os.listdir(directory):
+    for filename in sorted(os.listdir(directory)):
         if filename.startswith('HORZ_') and filename.endswith('.csv'):
             filepath = os.path.join(directory, filename)
             plot_curve_from_csv(filepath)

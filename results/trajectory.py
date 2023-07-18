@@ -10,15 +10,17 @@ def plot(measured_filename, truth_filename, drone_filename):
     truth_df = pd.read_csv(truth_filename)
     drone_df = pd.read_csv(drone_filename)
 
-    stddev = drone_df.replace("DRONE__","").replace(".csv","")
+    _,stddev= drone_filename.split("DRONE__")
+    stddev = stddev.replace(".csv","")
+    print(stddev)
 
     # Filter data for the current param value
 
     # 3D Plot using DRONE and BASE_TRUTH
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(drone_df['X'], drone_df['Y'], abs(drone_df['Z']), c='r', label='DRONE')
-    ax.scatter(truth_df['X'], truth_df['Y'], truth_df['Z'], c='b', label='BASE_TRUTH')
+    ax.scatter(drone_df['X'], drone_df['Y'], abs(drone_df['Z']), c='r', label='DRONE', s=5)
+    ax.scatter(truth_df['X'], truth_df['Y'], truth_df['Z'], c='b', label='BASE_TRUTH', s=5)
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')

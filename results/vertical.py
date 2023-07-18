@@ -25,7 +25,7 @@ def plot_curve_from_csv(csv_file):
     plt.grid(True)
     plt.savefig(plot_filename)  # Save the plot as an image
     plt.show()  # Show the plot on the screen (optional)
-
+120
 if __name__ == '__main__':
     # Replace the directory path with the location of your CSV files
     directory = 'results/data/vertical/'

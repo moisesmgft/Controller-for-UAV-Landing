@@ -39,6 +39,7 @@ private:
 	MultiAxisPIDController controller_;
 	Trajectory trajectory_;
 	std::ofstream &csvDrone_, &csvBaseTruth_, &csvBaseMeasure_;
+	system_clock::time_point startTime;
 	bool enter;
 	int counter_;
 public:
@@ -46,12 +47,13 @@ public:
 		if (enter) {
 			RCLCPP_INFO(drone_->get_logger(), "Entering tracking state.");
 			controller_.reset();
+			startTime = system_clock::now();
 			enter = false;
 		}
 
 		auto [xMeasure,yMeasure,xTruth,yTruth] = trajectory_.getPoint();
 		auto pos = drone_->getCurrentPosition();
-		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-1.0});
+		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,getZRef()});
 
 		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
 		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
@@ -59,14 +61,26 @@ public:
 
 		drone_->goTo(vec[0],vec[1],vec[2]);
 	}
-	bool to_stateApproaching() {
+	bool to_stateLanding() {
 		auto [x,y,d,dd] = trajectory_.getPoint();
-		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-1.0}) - drone_->getCurrentPosition();
-		csvDrone_ << diff.norm() << ",";
-		if (diff.norm() < 0.20)
+		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-0.3}) - drone_->getCurrentPosition();
+		if (diff.norm() < 0.35)
 			counter_ ++;
-		return (counter_ > 5);
+		csvDrone_ << counter_ << "," << diff.norm() << "," ;
+		return (counter_ > 50) or (getDuration()>240);
 	}
+
+	float getZRef() {
+		float z = - 4.0 + getDuration() * 3.7 / 30.0;
+		return (z > -0.3) ? (-0.3) : (z);
+	}
+
+	float getDuration() {
+	    system_clock::time_point currentTime = system_clock::now();
+    	duration<float> duration = currentTime - startTime;
+    	return duration.count();
+	}
+
 
 	stateTracking(Drone* drone, MultiAxisPIDController& controller, Trajectory trajectory, 
 					std::ofstream &csvDrone, std::ofstream &csvBaseTruth, std::ofstream &csvBaseMeasure) :
@@ -79,7 +93,7 @@ public:
 		enter{true}, 
 		counter_(0) 
 	{
-		csvDrone_ << "Norm,X,Y,Z" << std::endl;
+		csvDrone_ << "Counter,Norm,X,Y,Z" << std::endl;
 		csvBaseTruth_ << "X,Y,Z" << std::endl;
 		csvBaseMeasure_ << "X,Y,Z" << std::endl;
 	}
@@ -105,7 +119,7 @@ public:
 		auto pos = drone_->getCurrentPosition();
 		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-0.25});
 
-		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << "," << vec[2]<<std::endl;
+		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] <<std::endl;
 		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
 		csvBaseMeasure_ << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
 
@@ -114,9 +128,10 @@ public:
 	bool to_stateLanding() {
 		auto [x,y,d,dd] = trajectory_.getPoint();
 		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-0.25}) - drone_->getCurrentPosition();
-		if (diff.norm() < 0.20)
+		if (diff.norm() < 0.25)
 			counter_ ++;
-		return (counter_ > 5);
+		csvDrone_ << counter_ << "," << diff.norm() << ",";
+		return (counter_ > 15);
 	}
 
 	stateApproaching(Drone* drone, MultiAxisPIDController& controller, Trajectory trajectory, 
@@ -138,7 +153,8 @@ private:
 	Drone* drone_;
 public:
 	void act() override {
-		drone_->disarm();
+		RCLCPP_INFO(drone_->get_logger(), "Landing.");
+		drone_->setVelocity(0.0,0.0,0.0);
 	} 
 	bool to_stateEnd() {
 		return true;
@@ -162,19 +178,18 @@ private:
 	stateTakeOff takeOff;
 	stateTracking tracking;
 	stateLanding landing;
-	stateApproaching approaching;
 	stateEnd end;
 public:
 	bool isFinished() {
 		return (returnState() == &end);
 	}
 
-	stepFSM(stateTakeOff takeOff, stateTracking tracking, stateLanding landing, stateApproaching approaching, stateEnd end) :
-		FSM(&(this->takeOff)), takeOff{takeOff}, tracking{tracking}, landing{landing}, approaching{approaching}, end{end}
+	stepFSM(stateTakeOff takeOff, stateTracking tracking, stateLanding landing, stateEnd end) :
+		FSM(&(this->takeOff)), takeOff{takeOff}, tracking{tracking}, landing{landing},  end{end}
 	{
 		EDGE(TakeOff, takeOff, Tracking, tracking);
-		EDGE(Tracking, tracking, Approaching, approaching);
-		EDGE(Approaching, approaching, Landing, landing);
+		EDGE(Tracking, tracking, Landing, landing);
+		//EDGE(Approaching, approaching, Landing, landing);
 		EDGE(Landing, landing, End, end);
 	}
 };
@@ -207,8 +222,8 @@ int main(int argc, char *argv[])
 		rclcpp::Rate loop_rate(60);
 		auto drone = std::make_shared<Drone>();
 
-		Eigen::Vector3d verticalGains = {6.9, 11.5, 1.035};
-		Eigen::Vector3d horizontalGains = {1.35, 1.08, 0.42};
+		Eigen::Vector3d verticalGains = {1.2, 0.9, 0.1};
+		Eigen::Vector3d horizontalGains = {0.4, 0.8, 0.15};
 
 		MultiAxisPIDController controller(horizontalGains,verticalGains);
 		controller.setWindup({-10.0, 10.0},{-10.0, 0.0});
@@ -217,11 +232,11 @@ int main(int argc, char *argv[])
 
 		stateTakeOff takeoff(drone.get());
 		stateTracking tracking(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
-		stateApproaching approaching(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
+		//stateApproaching approaching(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
 		stateLanding landing(drone.get());
 		stateEnd end;
 
-		stepFSM myFSM(takeoff, tracking, landing, approaching, end);
+		stepFSM myFSM(takeoff, tracking, landing, end);
 
 		while (rclcpp::ok() && !myFSM.isFinished())
 		{
