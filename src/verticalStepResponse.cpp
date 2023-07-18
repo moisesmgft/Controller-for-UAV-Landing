@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 		std::cout << "Verical gains: ";
 		std::cin >> vP >> vI >> vD;
 
-		std::string csvFilename = "results/VERT_" + std::to_string(vP) 
+		std::string csvFilename = "results/data/VERT_" + std::to_string(vP) 
 										   + "__" + std::to_string(vI) 
 										   + "__" + std::to_string(vD) 
 										   + ".csv";

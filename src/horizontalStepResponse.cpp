@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 		std::cin >> hP >> hI >> hD;
 
 
-		std::string csvFilename = "results/HORZ_" + std::to_string(hP) 
+		std::string csvFilename = "results/data/HORZ_" + std::to_string(hP) 
 										   + "__" + std::to_string(hI) 
 										   + "__" + std::to_string(hD) 
 										   + ".csv";
