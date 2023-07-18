@@ -23,7 +23,7 @@ def plot_curve_from_csv(csv_file):
     plt.title(f'Curve for {PID}')
     plt.grid(True)
     plt.savefig(plot_filename)  # Save the plot as an image
-    plt.show()  # Show the plot on the screen (optional)
+    plt.close()  # Show the plot on the screen (optional)
 
 if __name__ == '__main__':
     # Replace the directory path with the location of your CSV files

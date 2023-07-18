@@ -12,9 +12,15 @@ def plot(measured_filename, truth_filename, drone_filename):
 
     _,stddev= drone_filename.split("DRONE__")
     stddev = stddev.replace(".csv","")
-    print(stddev)
 
-    # Filter data for the current param value
+    file1 = f'results/plot/landing/stddev_{stddev}_trajectory.png'
+    file2 = f'results/plot/landing/stddev_{stddev}_base.png'
+
+    if os.path.exists(file1) and os.path.exists(file2):
+        return 
+
+
+    print(stddev)
 
     # 3D Plot using DRONE and BASE_TRUTH
     fig = plt.figure()
@@ -24,8 +30,10 @@ def plot(measured_filename, truth_filename, drone_filename):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_title(f'3D Plot for stddev = {stddev}')
+    ax.set_title(f'Trajectories for stddev = {stddev}')
     ax.legend()
+    plt.savefig(file1)
+    plt.close()
 
     # 2D Plot using only columns X and Y of BASE_TRUTH and BASE_MEASURED
     plt.figure()
@@ -35,10 +43,11 @@ def plot(measured_filename, truth_filename, drone_filename):
     plt.plot(truth_df['X'], truth_df['Y'], 'bo', label='BASE_TRUTH', markersize=3)
     plt.xlabel('X')
     plt.ylabel('Y')
-    plt.title(f'2D Plot for stddev = {stddev}')
+    plt.title(f'Base position for stddev = {stddev}')
     plt.legend()
     plt.grid(True)
-    plt.show()
+    plt.savefig(file2)
+    plt.close()
 
 if __name__ == '__main__':
     # Replace the directory path with the location of your CSV files
