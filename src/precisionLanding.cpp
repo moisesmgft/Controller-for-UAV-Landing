@@ -38,15 +38,13 @@ private:
 	Drone* drone_;
 	MultiAxisPIDController controller_;
 	Trajectory trajectory_;
-	system_clock::time_point startTime;
 	std::ofstream &csvDrone_, &csvBaseTruth_, &csvBaseMeasure_;
 	bool enter;
 	int counter_;
 public:
 	void act() override {
 		if (enter) {
-			std::cout << "Entering tracking state.\n";
-			startTime = system_clock::now();
+			RCLCPP_INFO(drone_->get_logger(), "Entering tracking state.");
 			controller_.reset();
 			enter = false;
 		}
@@ -55,16 +53,17 @@ public:
 		auto pos = drone_->getCurrentPosition();
 		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-1.0});
 
-		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << "," << vec[2]<<std::endl;
+		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
 		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
 		csvBaseMeasure_ << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
 
 		drone_->goTo(vec[0],vec[1],vec[2]);
 	}
-	bool to_stateLanding() {
+	bool to_stateApproaching() {
 		auto [x,y,d,dd] = trajectory_.getPoint();
-		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-0.3}) - drone_->getCurrentPosition();
-		if (diff.norm() < 0.15)
+		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-1.0}) - drone_->getCurrentPosition();
+		csvDrone_ << diff.norm() << ",";
+		if (diff.norm() < 0.20)
 			counter_ ++;
 		return (counter_ > 5);
 	}
@@ -80,17 +79,57 @@ public:
 		enter{true}, 
 		counter_(0) 
 	{
-		csvDrone_ << "X,Y,Z,Out_Z" << std::endl;
+		csvDrone_ << "Norm,X,Y,Z" << std::endl;
 		csvBaseTruth_ << "X,Y,Z" << std::endl;
 		csvBaseMeasure_ << "X,Y,Z" << std::endl;
 	}
+};
 
-	float getDuration() {
-	    system_clock::time_point currentTime = system_clock::now();
-    	duration<float> duration = currentTime - startTime;
-    	return duration.count();
+class stateApproaching : public State
+{
+private:
+	Drone* drone_;
+	MultiAxisPIDController controller_;
+	Trajectory trajectory_;
+	std::ofstream &csvDrone_, &csvBaseTruth_, &csvBaseMeasure_;
+	bool enter;
+	int counter_;
+public:
+	void act() override {
+		if (enter) {
+			RCLCPP_INFO(drone_->get_logger(), "Entering approaching state.");
+			enter = false;
+		}
+
+		auto [xMeasure,yMeasure,xTruth,yTruth] = trajectory_.getPoint();
+		auto pos = drone_->getCurrentPosition();
+		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-0.25});
+
+		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << "," << vec[2]<<std::endl;
+		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
+		csvBaseMeasure_ << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
+
+		drone_->goTo(vec[0],vec[1],vec[2]);
+	}
+	bool to_stateLanding() {
+		auto [x,y,d,dd] = trajectory_.getPoint();
+		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-0.25}) - drone_->getCurrentPosition();
+		if (diff.norm() < 0.20)
+			counter_ ++;
+		return (counter_ > 5);
 	}
 
+	stateApproaching(Drone* drone, MultiAxisPIDController& controller, Trajectory trajectory, 
+					std::ofstream &csvDrone, std::ofstream &csvBaseTruth, std::ofstream &csvBaseMeasure) :
+		drone_{drone}, 
+		controller_{controller}, 
+		trajectory_{trajectory}, 
+		csvDrone_{csvDrone},
+		csvBaseTruth_{csvBaseTruth},
+		csvBaseMeasure_{csvBaseMeasure},
+		enter{true}, 
+		counter_(0) 
+	{}
 };
 
 class stateLanding : public State
@@ -123,17 +162,19 @@ private:
 	stateTakeOff takeOff;
 	stateTracking tracking;
 	stateLanding landing;
+	stateApproaching approaching;
 	stateEnd end;
 public:
 	bool isFinished() {
 		return (returnState() == &end);
 	}
 
-	stepFSM(stateTakeOff takeOff, stateTracking tracking, stateLanding landing, stateEnd end) :
-		FSM(&(this->takeOff)), takeOff{takeOff}, tracking{tracking}, landing{landing}, end{end}
+	stepFSM(stateTakeOff takeOff, stateTracking tracking, stateLanding landing, stateApproaching approaching, stateEnd end) :
+		FSM(&(this->takeOff)), takeOff{takeOff}, tracking{tracking}, landing{landing}, approaching{approaching}, end{end}
 	{
 		EDGE(TakeOff, takeOff, Tracking, tracking);
-		EDGE(Tracking, tracking, Landing, landing);
+		EDGE(Tracking, tracking, Approaching, approaching);
+		EDGE(Approaching, approaching, Landing, landing);
 		EDGE(Landing, landing, End, end);
 	}
 };
@@ -176,10 +217,11 @@ int main(int argc, char *argv[])
 
 		stateTakeOff takeoff(drone.get());
 		stateTracking tracking(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
+		stateApproaching approaching(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
 		stateLanding landing(drone.get());
 		stateEnd end;
 
-		stepFSM myFSM(takeoff, tracking, landing, end);
+		stepFSM myFSM(takeoff, tracking, landing, approaching, end);
 
 		while (rclcpp::ok() && !myFSM.isFinished())
 		{

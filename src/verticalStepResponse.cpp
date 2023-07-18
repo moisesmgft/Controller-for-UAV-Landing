@@ -41,7 +41,7 @@ private:
 public:
 	void act() override {
 		if (enter) {
-			std::cout << "Entering step state.\n";
+			RCLCPP_INFO(drone_->get_logger(), "Entering step state.");
 			startTime = system_clock::now();
 			controller_.reset();
 			enter = false;
@@ -79,7 +79,7 @@ class stateEnd : public State
 private:
 public:
 	void act() override {
-		std::cout << "End state!\n";
+		std::cout << "End state.\n";
 	}
 	stateEnd() {}
 };
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 		std::cout << "Verical gains: ";
 		std::cin >> vP >> vI >> vD;
 
-		std::string csvFilename = "results/data/VERT_" + std::to_string(vP) 
+		std::string csvFilename = "results/data/vertical/VERT_" + std::to_string(vP) 
 										   + "__" + std::to_string(vI) 
 										   + "__" + std::to_string(vD) 
 										   + ".csv";

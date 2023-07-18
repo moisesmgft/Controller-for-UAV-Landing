@@ -15,7 +15,7 @@ def plot_curve_from_csv(csv_file):
 
     # Extract columns "Time" and "Output_Z"
     time = df['Time'][2:]
-    output_z = df['Output_Z'][2:]
+    output_z = abs(df['Output_Z'][2:])
 
     # Plot the curve
     plt.plot(time, output_z)
@@ -28,7 +28,7 @@ def plot_curve_from_csv(csv_file):
 
 if __name__ == '__main__':
     # Replace the directory path with the location of your CSV files
-    directory = 'results/data/'
+    directory = 'results/data/vertical/'
     
     # Iterate through all files in the directory
     for filename in os.listdir(directory):

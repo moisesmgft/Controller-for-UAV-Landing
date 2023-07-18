@@ -27,8 +27,10 @@ def plot(measured_filename, truth_filename, drone_filename):
 
     # 2D Plot using only columns X and Y of BASE_TRUTH and BASE_MEASURED
     plt.figure()
-    plt.scatter(truth_df['X'], truth_df['Y'], c='b', label='BASE_TRUTH')
-    plt.scatter(measured_df['X'], measured_df['Y'], c='g', label='BASE_MEASURED')
+    #plt.scatter(measured_df['X'], measured_df['Y'], c='g', label='BASE_MEASURED')
+    #plt.scatter(truth_df['X'], truth_df['Y'], c='b', label='BASE_TRUTH')
+    plt.plot(measured_df['X'], measured_df['Y'], 'go', label='BASE_MEASURED', markersize=3)
+    plt.plot(truth_df['X'], truth_df['Y'], 'bo', label='BASE_TRUTH', markersize=3)
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.title(f'2D Plot for stddev = {stddev}')
