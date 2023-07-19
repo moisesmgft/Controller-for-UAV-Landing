@@ -2,6 +2,9 @@
 
 using namespace std::chrono;
 
+/**
+ * @brief Get the controller output
+ */
 float PIDController::getOutput(float current, float reference) {
 
     system_clock::time_point currentTime = system_clock::now();
@@ -28,12 +31,18 @@ float PIDController::getOutput(float current, float reference) {
     return output;
 }
 
+/**
+ * @brief Reset the controller.
+ */
 void PIDController::reset() {
     lastError = 0.0f;
     ITerm = 0.0f;
     lastTime = system_clock::now();
 }
 
+/**
+ * @brief Set the windup
+ */
 void PIDController::setWindup(float min, float max) { 
     _minWindup = min;
     _maxWindup = max;

@@ -47,9 +47,7 @@ public:
 
 		this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
 		this->arm();
-		
 
-		//timer_ = this->create_wall_timer(10ms, func);
 	}
 
 	void arm();
@@ -59,13 +57,9 @@ public:
 
 
 	// Getters
-	int getCount() {return offboard_setpoint_counter_;}
-	float getTime() {return time_count_;}
 	Eigen::Vector3d getCurrentPosition();
 
 private:
-
-
 
 	rclcpp::TimerBase::SharedPtr timer_;
 
@@ -81,10 +75,7 @@ private:
 	*/
 	rclcpp::Subscription<VehicleLocalPosition>::SharedPtr vehicle_local_position_subscription_;
 
-	//std::atomic<uint64_t> timestamp_;   //!< common synced timestamped
 
-	uint64_t offboard_setpoint_counter_;   //!< counter for the number of setpoints sent
-	float time_count_;
 
 	void publish_offboard_control_mode(bool position, bool velocity);
 	void publish_trajectory_setpoint(float x, float y, float z);

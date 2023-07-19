@@ -24,11 +24,18 @@ void Drone::disarm()
 	RCLCPP_INFO(this->get_logger(), "Disarm command send");
 }
 
+
+/**
+ * @brief Send a command to move the vehicle to (x,y,z)
+ */
 void Drone::goTo(float x, float y, float z) {
 	publish_offboard_control_mode(true, false);
 	publish_trajectory_setpoint(x,y,z);
 }
 
+/**
+ * @brief Set the vehicle velocity.
+ */
 void Drone::setVelocity(float vx, float vy, float vz) {
 	publish_offboard_control_mode(false, true);
 	TrajectorySetpoint msg{};
@@ -56,8 +63,6 @@ void Drone::publish_offboard_control_mode(bool position, bool velocity)
 
 /**
  * @brief Publish a trajectory setpoint
- *        For this example, it sends a trajectory setpoint to make the
- *        vehicle hover at 5 meters with a yaw angle of 180 degrees.
  */
 void Drone::publish_trajectory_setpoint(float x, float y, float z)
 {
@@ -89,10 +94,17 @@ void Drone::publish_vehicle_command(uint16_t command, float param1, float param2
 	vehicle_command_publisher_->publish(msg);
 }
 
+/**
+ * @brief Callback function to save the message informing the vehicle position
+ */
 void Drone::positionCallback(const VehicleLocalPosition::SharedPtr msg) {
 	positionReference = *msg;
 }
 
+
+/**
+ * @brief Get the vehicle position
+ */
 Eigen::Vector3d Drone::getCurrentPosition() {
 	return Eigen::Vector3d({
 		positionReference.x,

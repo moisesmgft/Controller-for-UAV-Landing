@@ -17,15 +17,23 @@ public:
                             std::mt19937(std::random_device{}())
                         ))
     {
+        // The total time for the trajectory given its param and its velocity.
         float totalTime = (6.09722*a) / v;
+
+        // Angular velocity
         p = 2 * PI / (totalTime);
     }
     std::tuple<float,float,float,float> getPoint();
     float getParam();
+
 private:
-    float a, v, p;
-    std::pair<float,float> c;
-    system_clock::time_point startTime;
-    std::function<float()> randomGenerator;
+
+    float a, v, p; // Lemniscate param, linear velocity, angular velocity.
+
+    std::pair<float,float> c; // Trajectory center.
+
+    system_clock::time_point startTime; // Starting time.
+
+    std::function<float()> randomGenerator; // Noise generator.
 
 };
