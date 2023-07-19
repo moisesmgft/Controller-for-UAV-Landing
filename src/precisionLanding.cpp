@@ -54,19 +54,22 @@ public:
 		auto [xMeasure,yMeasure,xTruth,yTruth] = trajectory_.getPoint();
 		auto pos = drone_->getCurrentPosition();
 		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,getZRef()});
+		auto time = getDuration();
 
-		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
-		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
-		csvBaseMeasure_ << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
+		csvDrone_ << time << "," << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
+		csvBaseTruth_ << time << "," << xTruth << "," << yTruth << "," << 0.0 << std::endl;
+		csvBaseMeasure_ << time << "," << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
 
 		drone_->goTo(vec[0],vec[1],vec[2]);
 	}
 	bool to_stateLanding() {
+
 		auto [x,y,d,dd] = trajectory_.getPoint();
 		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-0.3}) - drone_->getCurrentPosition();
+
 		if (diff.norm() < 0.35)
 			counter_ ++;
-		csvDrone_ << counter_ << "," << diff.norm() << "," ;
+
 		return (counter_ > 50) or (getDuration()>240);
 	}
 
@@ -93,58 +96,10 @@ public:
 		enter{true}, 
 		counter_(0) 
 	{
-		csvDrone_ << "Counter,Norm,X,Y,Z" << std::endl;
-		csvBaseTruth_ << "X,Y,Z" << std::endl;
-		csvBaseMeasure_ << "X,Y,Z" << std::endl;
+		csvDrone_ << "Time,X,Y,Z" << std::endl;
+		csvBaseTruth_ << "Time,X,Y,Z" << std::endl;
+		csvBaseMeasure_ << "Time,X,Y,Z" << std::endl;
 	}
-};
-
-class stateApproaching : public State
-{
-private:
-	Drone* drone_;
-	MultiAxisPIDController controller_;
-	Trajectory trajectory_;
-	std::ofstream &csvDrone_, &csvBaseTruth_, &csvBaseMeasure_;
-	bool enter;
-	int counter_;
-public:
-	void act() override {
-		if (enter) {
-			RCLCPP_INFO(drone_->get_logger(), "Entering approaching state.");
-			enter = false;
-		}
-
-		auto [xMeasure,yMeasure,xTruth,yTruth] = trajectory_.getPoint();
-		auto pos = drone_->getCurrentPosition();
-		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,-0.25});
-
-		csvDrone_ << pos[0] << "," << pos[1] << "," << pos[2] <<std::endl;
-		csvBaseTruth_ << xTruth << "," << yTruth << "," << 0.0 << std::endl;
-		csvBaseMeasure_ << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
-
-		drone_->goTo(vec[0],vec[1],vec[2]);
-	}
-	bool to_stateLanding() {
-		auto [x,y,d,dd] = trajectory_.getPoint();
-		Eigen::Vector3d diff = Eigen::Vector3d({x,y,-0.25}) - drone_->getCurrentPosition();
-		if (diff.norm() < 0.25)
-			counter_ ++;
-		csvDrone_ << counter_ << "," << diff.norm() << ",";
-		return (counter_ > 15);
-	}
-
-	stateApproaching(Drone* drone, MultiAxisPIDController& controller, Trajectory trajectory, 
-					std::ofstream &csvDrone, std::ofstream &csvBaseTruth, std::ofstream &csvBaseMeasure) :
-		drone_{drone}, 
-		controller_{controller}, 
-		trajectory_{trajectory}, 
-		csvDrone_{csvDrone},
-		csvBaseTruth_{csvBaseTruth},
-		csvBaseMeasure_{csvBaseMeasure},
-		enter{true}, 
-		counter_(0) 
-	{}
 };
 
 class stateLanding : public State
