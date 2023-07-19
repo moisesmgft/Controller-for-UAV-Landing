@@ -27,7 +27,6 @@ def plot_curve_from_csv(csv_file):
     plt.close()  # Show the plot on the screen (optional)
 120
 if __name__ == '__main__':
-    # Replace the directory path with the location of your CSV files
     directory = 'results/data/vertical/'
     
     # Iterate through all files in the directory

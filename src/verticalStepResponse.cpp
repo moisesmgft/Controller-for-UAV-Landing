@@ -11,9 +11,7 @@
 #include <chrono>
 using namespace std::chrono;
 
-
-
-
+// State responsible for the takeoff
 class stateTakeOff : public State
 {
 private:
@@ -21,7 +19,6 @@ private:
 public:
 	void act() override {
 	drone_->goTo(0.0,0.0,-5.0);
-	//drone_->arm();
 }
 	bool to_stateStep() {
 	Eigen::Vector3d diff = Eigen::Vector3d({0.0,0.0,-5.0}) - drone_->getCurrentPosition();
@@ -30,6 +27,7 @@ public:
 	stateTakeOff(Drone* drone) : drone_(drone) {}
 };
 
+// State where the unit step is commanded 
 class stateStep : public State
 {
 private:
@@ -74,6 +72,7 @@ public:
 
 };
 
+// Final state
 class stateEnd : public State
 {
 private:
@@ -108,10 +107,10 @@ int main(int argc, char *argv[])
 {
 	char loop;
 
-	while (std::cout << "'y' to tune PID controller.\n" && std::cin >> loop && loop == 'y') {
+	while (std::cout << "\n\n'y' to tune PID controller: " && std::cin >> loop && loop == 'y') {
 
+		// Define horizontal gains
 		float vP, vI, vD;
-
 		std::cout << "Verical gains: ";
 		std::cin >> vP >> vI >> vD;
 

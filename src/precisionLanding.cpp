@@ -15,26 +15,33 @@ using namespace std::chrono;
 
 
 
-
+// State responsible for the takeoff
 class stateTakeOff : public State
 {
 private:
+
 	Drone* drone_;
+
 public:
+
 	void act() override {
-	drone_->goTo(0.0,0.0,-5.0);
-	//drone_->arm();
-}
+		drone_->goTo(0.0,0.0,-5.0);
+	}
+
 	bool to_stateTracking() {
-	Eigen::Vector3d diff = Eigen::Vector3d({0.0,0.0,-5.0}) - drone_->getCurrentPosition();
-	return diff.norm() < 0.05;
-}
+		Eigen::Vector3d diff = Eigen::Vector3d({0.0,0.0,-5.0}) - drone_->getCurrentPosition();
+		return diff.norm() < 0.05;
+	}
+
 	stateTakeOff(Drone* drone) : drone_(drone) {}
+
 };
 
+// Drone tracking the base
 class stateTracking : public State
 {
 private:
+
 	Drone* drone_;
 	MultiAxisPIDController controller_;
 	Trajectory trajectory_;
@@ -42,8 +49,11 @@ private:
 	system_clock::time_point startTime;
 	bool enter;
 	int counter_;
+
 public:
+
 	void act() override {
+
 		if (enter) {
 			RCLCPP_INFO(drone_->get_logger(), "Entering tracking state.");
 			controller_.reset();
@@ -51,17 +61,21 @@ public:
 			enter = false;
 		}
 
+		// Calculate output 
 		auto [xMeasure,yMeasure,xTruth,yTruth] = trajectory_.getPoint();
 		auto pos = drone_->getCurrentPosition();
 		Eigen::Vector3d vec = controller_.getOutput(pos, {xMeasure,yMeasure,getZRef()});
 		auto time = getDuration();
 
+		// Saving info
 		csvDrone_ << time << "," << pos[0] << "," << pos[1] << "," << pos[2] << std::endl;
 		csvBaseTruth_ << time << "," << xTruth << "," << yTruth << "," << 0.0 << std::endl;
 		csvBaseMeasure_ << time << "," << xMeasure << "," << yMeasure << "," << 0.0 << std::endl;
 
+		// Send command to vehicle
 		drone_->goTo(vec[0],vec[1],vec[2]);
 	}
+
 	bool to_stateLanding() {
 
 		auto [x,y,d,dd] = trajectory_.getPoint();
@@ -84,7 +98,6 @@ public:
     	return duration.count();
 	}
 
-
 	stateTracking(Drone* drone, MultiAxisPIDController& controller, Trajectory trajectory, 
 					std::ofstream &csvDrone, std::ofstream &csvBaseTruth, std::ofstream &csvBaseMeasure) :
 		drone_{drone}, 
@@ -105,46 +118,59 @@ public:
 class stateLanding : public State
 {
 private:
+
 	Drone* drone_;
+
 public:
+
 	void act() override {
 		RCLCPP_INFO(drone_->get_logger(), "Landing.");
 		drone_->setVelocity(0.0,0.0,0.0);
 	} 
+
 	bool to_stateEnd() {
 		return true;
 	}
+
 	stateLanding(Drone* drone) : drone_{drone} {}
+
 };
+
 
 class stateEnd : public State
 {
 private:
 public:
+
 	void act() override {
 		std::cout << "End state!\n";
 	}
+
 	stateEnd() {}
+
 };
 
-class stepFSM : public FSM 
+
+class landingFSM : public FSM 
 {
 private:
+
 	stateTakeOff takeOff;
 	stateTracking tracking;
 	stateLanding landing;
 	stateEnd end;
+
 public:
+
 	bool isFinished() {
 		return (returnState() == &end);
 	}
 
-	stepFSM(stateTakeOff takeOff, stateTracking tracking, stateLanding landing, stateEnd end) :
+	landingFSM(stateTakeOff takeOff, stateTracking tracking, stateLanding landing, stateEnd end) :
 		FSM(&(this->takeOff)), takeOff{takeOff}, tracking{tracking}, landing{landing},  end{end}
 	{
 		EDGE(TakeOff, takeOff, Tracking, tracking);
 		EDGE(Tracking, tracking, Landing, landing);
-		//EDGE(Approaching, approaching, Landing, landing);
 		EDGE(Landing, landing, End, end);
 	}
 };
@@ -164,10 +190,12 @@ int main(int argc, char *argv[])
 		std::cout << "Standard deviation: ";
 		std::cin >> stddev;
 
+		// csv files path
 		std::string csvDroneFilename = "results/data/landing/drone/DRONE__" + std::to_string(stddev) + ".csv";
 		std::string csvBaseTruthFilename = "results/data/landing/truth/BASE_TRUTH__" + std::to_string(stddev) + ".csv";
 		std::string csvBaseMeasureFilename = "results/data/landing/measured/BASE_MEASURED__" + std::to_string(stddev) + ".csv";
 		
+		// opening csv files
 		std::ofstream csvDrone(csvDroneFilename);
 		std::ofstream csvBaseTruth(csvBaseTruthFilename);
 		std::ofstream csvBaseMeasure(csvBaseMeasureFilename);
@@ -175,6 +203,7 @@ int main(int argc, char *argv[])
 		
 		rclcpp::init(argc, argv);
 		rclcpp::Rate loop_rate(60);
+
 		auto drone = std::make_shared<Drone>();
 
 		Eigen::Vector3d verticalGains = {1.2, 0.9, 0.1};
@@ -185,14 +214,14 @@ int main(int argc, char *argv[])
 
 		Trajectory trajectory(6.0, 0.4, {8.0, 8.0}, mean, stddev);
 
+		// Creating FSM
 		stateTakeOff takeoff(drone.get());
 		stateTracking tracking(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
-		//stateApproaching approaching(drone.get(), controller, trajectory, csvDrone, csvBaseTruth, csvBaseMeasure);
 		stateLanding landing(drone.get());
 		stateEnd end;
+		landingFSM myFSM(takeoff, tracking, landing, end);
 
-		stepFSM myFSM(takeoff, tracking, landing, end);
-
+		// Running FSM
 		while (rclcpp::ok() && !myFSM.isFinished())
 		{
 			myFSM.executeFSM();

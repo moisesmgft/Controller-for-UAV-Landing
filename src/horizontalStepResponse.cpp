@@ -12,8 +12,7 @@
 using namespace std::chrono;
 
 
-
-
+// State responsible for the takeoff
 class stateTakeOff : public State
 {
 private:
@@ -21,7 +20,6 @@ private:
 public:
 	void act() override {
 	drone_->goTo(0.0,0.0,-5.0);
-	//drone_->arm();
 }
 	bool to_stateStep() {
 	Eigen::Vector3d diff = Eigen::Vector3d({0.0,0.0,-5.0}) - drone_->getCurrentPosition();
@@ -30,6 +28,7 @@ public:
 	stateTakeOff(Drone* drone) : drone_(drone) {}
 };
 
+// State where the unit step is commanded 
 class stateStep : public State
 {
 private:
@@ -51,6 +50,7 @@ public:
 		auto pos = drone_->getCurrentPosition();
 		Eigen::Vector3d vec = controller_.getOutput(pos, {1.0,0.0,-5.0});
 
+		// Saving info about the drone position
 		csvFile_ << time << ","
 				 << pos[0] << ","
 				 << vec[0] << std::endl;
@@ -60,11 +60,13 @@ public:
 	bool to_stateEnd() {
 		return (getDuration() > 20);
 	}
+
 	stateStep(Drone* drone, MultiAxisPIDController& controller, std::ofstream &csvFile) :
 		drone_{drone}, controller_{controller}, csvFile_{csvFile}, enter{true} 
 	{
 		csvFile_ << "Time,Pos_X,Output_X" << std::endl;
 	}
+
 	float getDuration() {
 	    system_clock::time_point currentTime = system_clock::now();
     	duration<float> duration = currentTime - startTime;
@@ -73,6 +75,7 @@ public:
 
 };
 
+// Final state
 class stateEnd : public State
 {
 private:
@@ -83,6 +86,8 @@ public:
 	stateEnd() {}
 };
 
+
+// FSM 
 class stepFSM : public FSM 
 {
 private:
@@ -107,9 +112,9 @@ int main(int argc, char *argv[])
 {
 	char loop;
 
-	while (std::cout << "'y' to tune PID controller.\n" && std::cin >> loop && loop == 'y') {
+	while (std::cout << "\n\n'y' to tune PID controller: " && std::cin >> loop && loop == 'y') {
 
-
+		// Define horizontal gains
 		float hP, hI, hD;
 		std::cout << "Horizontal gains: ";
 		std::cin >> hP >> hI >> hD;
@@ -127,7 +132,6 @@ int main(int argc, char *argv[])
 		rclcpp::Rate loop_rate(60);
 
 		auto drone = std::make_shared<Drone>();
-
 
 		Eigen::Vector3d horizontalGains = {hP, hI, hD};
 		Eigen::Vector3d verticalGains = {0.0, 0.0, 0.0};

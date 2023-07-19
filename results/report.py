@@ -38,11 +38,9 @@ def measured_analysis(directory, headerX, headerY, labels, title, fig_name):
             # Read the CSV file into a DataFrame
             df = pd.read_csv(filepath)
 
-            # Extract columns "X" and "Y"
             x_values = df[headerX]
             y_values = df[headerY]
 
-            # Plot X vs Y with the filename as the label
             plt.scatter(x_values, y_values, label=label, s=2)
 
     # Set labels, title, legend, and grid for the plot
@@ -147,8 +145,8 @@ def vertical():
 
 if __name__ == '__main__':
 
-    #horizontal()
-    #vertical()
+    horizontal()
+    vertical()
     
     directory = 'results/data/landing/measured'
     headerX = 'X'

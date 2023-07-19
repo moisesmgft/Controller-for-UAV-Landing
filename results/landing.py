@@ -37,8 +37,6 @@ def plot(measured_filename, truth_filename, drone_filename):
 
     # 2D Plot using only columns X and Y of BASE_TRUTH and BASE_MEASURED
     plt.figure()
-    #plt.scatter(measured_df['X'], measured_df['Y'], c='g', label='BASE_MEASURED')
-    #plt.scatter(truth_df['X'], truth_df['Y'], c='b', label='BASE_TRUTH')
     plt.plot(measured_df['X'], measured_df['Y'], 'go', label='BASE_MEASURED', markersize=3)
     plt.plot(truth_df['X'], truth_df['Y'], 'bo', label='BASE_TRUTH', markersize=3)
     plt.xlabel('X')
@@ -52,12 +50,6 @@ def plot(measured_filename, truth_filename, drone_filename):
 if __name__ == '__main__':
     # Replace the directory path with the location of your CSV files
     directory = 'results/data/landing/'
-
-
-    # Plot for each value of "param"
-    #for param_value in param_values:
-    #    plot_3d_and_2d(drone_df, base_truth_df, base_measured_df, param_value)
-
 
     for measured, truth, drone in zip(sorted(os.listdir(directory+'measured')),
                                       sorted(os.listdir(directory+'truth')),
